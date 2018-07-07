@@ -1,0 +1,92 @@
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.capsane.simplecamera.AutoFitTextureView
+        android:id="@+id/autoFitTextureView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <ImageView
+        android:id="@+id/image_micro"
+        android:layout_width="500dp"
+        android:layout_height="1000dp"
+        android:layout_marginTop="8dp"
+        android:contentDescription="@string/title"
+        app:layout_constraintBottom_toTopOf="@+id/guidline_h_bottom"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="@id/guidline_v"
+        app:layout_constraintTop_toTopOf="@+id/guidline_h_top" />
+
+    <ImageView
+        android:id="@+id/image_loc1"
+        android:layout_width="200dp"
+        android:layout_height="400dp"
+        android:layout_marginTop="8dp"
+        android:contentDescription="@string/title"
+        app:layout_constraintLeft_toRightOf="@+id/guidline_v"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/guidline_h_top" />
+
+    <ImageView
+        android:id="@+id/image_loc2"
+        android:layout_width="200dp"
+        android:layout_height="400dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="20dp"
+        android:contentDescription="@string/title"
+        app:layout_constraintBottom_toTopOf="@+id/guidline_h_bottom"
+        app:layout_constraintLeft_toRightOf="@+id/guidline_v"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/image_loc1" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidline_h_top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.1" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidline_h_bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.9" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guidline_v"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.65" />
+
+    <FrameLayout
+        android:id="@+id/micro_loc_button_layout"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="8dp"
+        android:background="@color/colorControlBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/guidline_h_bottom"
+        >
+
+
+        <ImageButton
+            android:id="@+id/button_next_micro_loc"
+            style="@android:style/Widget.Material.Light.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:contentDescription="@string/take_picture"
+            android:src="@mipmap/take_picture"
+
+            />
+    </FrameLayout>
+
+
+</android.support.constraint.ConstraintLayout>
