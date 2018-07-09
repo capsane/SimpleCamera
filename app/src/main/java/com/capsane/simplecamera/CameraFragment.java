@@ -69,6 +69,10 @@ import java.util.concurrent.TimeUnit;
 public class CameraFragment extends Fragment implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private static final String TAG = "CameraFragment";
 
+
+    // 防止GC
+//    private static ImageSaver mImageSaver = null;
+
     // 微喷墨点拍摄、宏观拍摄、局部拍摄
     public static final int FRAGMENT_TYPE_POINT = 1;
     public static final int FRAGMENT_TYPE_MACRO = 2;
@@ -173,6 +177,18 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             // This method is called when the camera is opened.  We start camera preview here.
             mCameraOpenCloseLock.release();
             mCameraDevice = cameraDevice;
+            // debug capsane
+            CameraManager manager = (CameraManager) getActivity().getSystemService(Context.CAMERA_SERVICE);
+            try {
+                CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics("0");
+                List<android.hardware.camera2.CaptureRequest.Key<?>> list = cameraCharacteristics.getAvailableCaptureRequestKeys();
+                Log.e(TAG, "onOpened: " + list);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+
+
             createCameraPreviewSession();
         }
 
@@ -200,39 +216,43 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
 
         private void process(CaptureResult result) {
-//            Log.e(TAG, "process: ");
-//            Log.d(TAG, "process: mState: " + mState);
             switch (mState) {
                 case STATE_PREVIEW: {
-//                    Log.e(TAG, "process: " + "STATE_PREVIEW");
+                    Log.e(TAG, "process: " + "STATE_PREVIEW");
                     // We have nothing to do when the camera preview is working normally.
                     break;
                 }
                 case STATE_WAITING_LOCK: {
-                    // TODO: 卡在这里，无法锁定？
                     Log.e(TAG, "process: " + "STATE_WAITING_LOCK");
+
+                    // TODO: UVC Camera 卡在这里: CONTROL_AF_STATE_INACTIVE == 0
                     Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
-                    if (afState == null) {
-                        Log.e(TAG, "process: " + "afState == null");
-                        captureStillPicture();
-                    } else if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
-                            CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState) {
+                    Log.e(TAG, "process: afState : " + afState);
 
-                        Log.e(TAG, "process: " + "afState != null");
-
-                        // CONTROL_AE_STATE can be null on some devices
-                        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
-                        if (aeState == null ||
-                                aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
-                            mState = STATE_PICTURE_TAKEN;
-                            captureStillPicture();
-                        } else {
-                            Log.e(TAG, "process: runPrecaptureSequence");
-                            runPrecaptureSequence();
-                        }
-                    }
-                    // FIXME: if 和 else if 都不是！
+//                     capsane: 直接拍摄？
+                    captureStillPicture();
                     break;
+
+//                    if (afState == null) {
+//                        Log.e(TAG, "process: " + "afState == null");
+//                        captureStillPicture();
+//                    } else if (CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED == afState ||
+//                            CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED == afState) {
+//                        // 聚焦结束或者聚焦失败
+//                        Log.e(TAG, "process: " + "afState != null");
+//
+//                        // CONTROL_AE_STATE can be null on some devices
+//                        Integer aeState = result.get(CaptureResult.CONTROL_AE_STATE);
+//                        if (aeState == null ||
+//                                aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED) {
+//                            mState = STATE_PICTURE_TAKEN;
+//                            captureStillPicture();
+//                        } else {
+//                            Log.e(TAG, "process: runPrecaptureSequence");
+//                            runPrecaptureSequence();
+//                        }
+//                    }
+//                    break;
                 }
                 // FIXME: ？？
                 case STATE_WAITING_PRECAPTURE: {
@@ -326,9 +346,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader imageReader) {
-            // FIXME: 保存图片， 此时可以预览，切换fragment
+            Log.e(TAG, "onImageAvailable: ");
+            // 保存图片， 此时可以预览，切换fragment
             mBackgroundHandler.post(new ImageSaver(imageReader.acquireNextImage(), mSaveFile));
-            // 记得关闭当前Fragment的Camera
+            // FIXME: 记得关闭当前Fragment的Camera，bug关闭的太早，导致ImageReader在图片获取前就关闭了
             closeCamera();
         }
     };
@@ -614,10 +635,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 mCameraDevice.close();
                 mCameraDevice = null;
             }
-            if (null != mImageReader) {
-                mImageReader.close();
-                mImageReader = null;
-            }
+            // FIXME: 延迟关闭？
+//            if (null != mImageReader) {
+//                mImageReader.close();
+//                mImageReader = null;
+//            }
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
@@ -625,7 +647,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         }
     }
 
-    // TODO: mBackgroundThread 用于保存图片
+    // mBackgroundThread 用于保存图片
     private void startBackgroundThread() {
         mBackgroundThread = new HandlerThread("CameraBackground");
         mBackgroundThread.start();
@@ -743,6 +765,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
 
     private void takePicture() {
+        Log.d(TAG, "takePicture(): ");
         lockFocus();
     }
 
@@ -752,19 +775,13 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
      */
     private void lockFocus() {
         try {
-            Log.e(TAG, "lockFocus: ");
             // This is how to tell the camera to lock focus.
             // capsane
             mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                     CameraMetadata.CONTROL_AF_TRIGGER_START);
-
-
-//            mPreviewRequestBuilder.set(CaptureRequest.CONTROL_MODE,
-//                    CameraMetadata.CONTROL_AF_TRIGGER_START);
-
             // Tell #mCaptureCallback to wait for the lock.
             mState = STATE_WAITING_LOCK;
-            // capture()捕获一次on-shot
+            // capture()捕获一次on-shot,数据在mCaptureCallback回调中
             mCaptureSession.capture(mPreviewRequestBuilder.build(), mCaptureCallback,
                     mBackgroundHandler);
         } catch (CameraAccessException e) {
@@ -871,7 +888,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.button_take_picture: {
-                Log.e(TAG, "onClick: ");
                 takePicture();
                 break;
             }
@@ -901,6 +917,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         private final File mFile;
 
         ImageSaver(Image image, File file) {
+            Log.d(TAG, "ImageSaver: ");
+            if (image == null) {
+                Log.e(TAG, "ImageSaver: image is null!!!!!");
+            }
             mImage = image;
             mFile = file;
         }
