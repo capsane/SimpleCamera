@@ -57,6 +57,15 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import static com.capsane.simplecamera.Constants.ARG_IMAGE;
+import static com.capsane.simplecamera.Constants.ARG_LOC_NUM;
+import static com.capsane.simplecamera.Constants.ARG_NUMBER;
+import static com.capsane.simplecamera.Constants.ARG_TYPE;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_LOC;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MACRO;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MICRO;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_POINT;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -69,21 +78,9 @@ import java.util.concurrent.TimeUnit;
 public class CameraFragment extends Fragment implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private static final String TAG = "CameraFragment";
 
-
-    // 防止GC
-//    private static ImageSaver mImageSaver = null;
-
-    // 微喷墨点拍摄、宏观拍摄、局部拍摄
-    public static final int FRAGMENT_TYPE_POINT = 1;
-    public static final int FRAGMENT_TYPE_MACRO = 2;
-    public static final int FRAGMENT_TYPE_MICRO = 3;
-    public static final int FRAGMENT_TYPE_MLOC = 4;
-
-    public static final String ARG_PARAM1 = "FragmentType";
-    public static final String ARG_PARAM2 = "PhotoNumber";
-
     private int mFragmentType;
     private int mPhotoNumber;
+    private int mLocationNumber;
 
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
@@ -178,17 +175,14 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             mCameraOpenCloseLock.release();
             mCameraDevice = cameraDevice;
             // debug capsane
-            CameraManager manager = (CameraManager) getActivity().getSystemService(Context.CAMERA_SERVICE);
-            try {
-                CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics("0");
-                List<android.hardware.camera2.CaptureRequest.Key<?>> list = cameraCharacteristics.getAvailableCaptureRequestKeys();
-                Log.e(TAG, "onOpened: " + list);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-
-
+//            CameraManager manager = (CameraManager) getActivity().getSystemService(Context.CAMERA_SERVICE);
+//            try {
+//                CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics("0");
+//                List<android.hardware.camera2.CaptureRequest.Key<?>> list = cameraCharacteristics.getAvailableCaptureRequestKeys();
+//                Log.e(TAG, "onOpened: " + list);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
             createCameraPreviewSession();
         }
 
@@ -218,12 +212,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         private void process(CaptureResult result) {
             switch (mState) {
                 case STATE_PREVIEW: {
-                    Log.e(TAG, "process: " + "STATE_PREVIEW");
+//                    Log.e(TAG, "process: " + "STATE_PREVIEW");
                     // We have nothing to do when the camera preview is working normally.
                     break;
                 }
                 case STATE_WAITING_LOCK: {
-                    Log.e(TAG, "process: " + "STATE_WAITING_LOCK");
+//                    Log.e(TAG, "process: " + "STATE_WAITING_LOCK");
 
                     // TODO: UVC Camera 卡在这里: CONTROL_AF_STATE_INACTIVE == 0
                     Integer afState = result.get(CaptureResult.CONTROL_AF_STATE);
@@ -346,7 +340,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader imageReader) {
-            Log.e(TAG, "onImageAvailable: ");
+//            Log.e(TAG, "onImageAvailable: ");
             // 保存图片， 此时可以预览，切换fragment
             mBackgroundHandler.post(new ImageSaver(imageReader.acquireNextImage(), mSaveFile));
             // FIXME: 记得关闭当前Fragment的Camera，bug关闭的太早，导致ImageReader在图片获取前就关闭了
@@ -372,19 +366,12 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     public CameraFragment() {
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param fragmentType Parameter 1.
-     * @param photoNumber Parameter 2.
-     * @return A new instance of fragment CameraFragment.
-     */
-    public static CameraFragment newInstance(int fragmentType, int photoNumber) {
+    public static CameraFragment newInstance(int fragmentType, int photoNumber, int locationNumber) {
         CameraFragment fragment = new CameraFragment();
         Bundle args = new Bundle();
-        args.putInt(ARG_PARAM1, fragmentType);
-        args.putInt(ARG_PARAM2, photoNumber);
+        args.putInt(ARG_TYPE, fragmentType);
+        args.putInt(ARG_NUMBER, photoNumber);
+        args.putInt(ARG_LOC_NUM, locationNumber);
         fragment.setArguments(args);
         return fragment;
     }
@@ -393,9 +380,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mFragmentType = getArguments().getInt(ARG_PARAM1);
-            Log.e(TAG, "onCreate: mFragmentType: " + mFragmentType);
-            mPhotoNumber = getArguments().getInt(ARG_PARAM2);
+            mFragmentType = getArguments().getInt(ARG_TYPE);
+            mPhotoNumber = getArguments().getInt(ARG_NUMBER);
+            mLocationNumber = getArguments().getInt(ARG_LOC_NUM);
         }
         Log.e(TAG, "onCreate");
     }
@@ -427,6 +414,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             case FRAGMENT_TYPE_MICRO:
                 cameraTitle.setText("微观" + mPhotoNumber);
                 break;
+
+            case FRAGMENT_TYPE_LOC:
+                cameraTitle.setText("定位" + mPhotoNumber + "-" + mLocationNumber);
         }
     }
 
@@ -493,7 +483,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
-
+                Log.e(TAG, "setUpCameraOutputs: id: " + cameraId);
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
@@ -510,8 +500,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 Size largest = Collections.max(
                         Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
                         new CompareSizesByArea());
+                // FIXME: Hit timeout for jpeg callback! 2 -> 4
                 mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
-                        ImageFormat.JPEG, /*maxImages*/2);
+                        ImageFormat.JPEG, /*maxImages*/15);
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mBackgroundHandler);
 
@@ -583,7 +574,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
                 mCameraId = cameraId;
                 // capsane
-                Log.e(TAG, "CameraId: " + cameraId);
                 return;
             }
         } catch (CameraAccessException e) {
@@ -615,7 +605,19 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 throw new RuntimeException("Time out waiting to lock camera opening");
             }
             Log.e(TAG, "openCamera: " + mCameraId);
-            manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
+
+            if (mFragmentType == FRAGMENT_TYPE_MACRO || mFragmentType == FRAGMENT_TYPE_LOC) {
+                mCameraId = Constants.CAMERA_ID_INSIDE;
+            } else if (mFragmentType == FRAGMENT_TYPE_POINT || mFragmentType == FRAGMENT_TYPE_MICRO) {
+                mCameraId = Constants.CAMERA_ID_OUTSIDE;
+            } else {
+                showToast("Error mFragmentType while set up camera id");
+            }
+            if (manager != null) {
+                manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
+            } else {
+                showToast("Camera Manager is null");
+            }
             // 打开成功会执行CameraDevice.StateCallback.onOpened()回调
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -917,10 +919,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         private final File mFile;
 
         ImageSaver(Image image, File file) {
-            Log.d(TAG, "ImageSaver: ");
-            if (image == null) {
-                Log.e(TAG, "ImageSaver: image is null!!!!!");
-            }
             mImage = image;
             mFile = file;
         }
@@ -1034,12 +1032,6 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     }
 
 
-    public void onButtonPressed(Bundle string) {
-        if (mListener != null) {
-            mListener.onCameraInteraction(string);
-        }
-    }
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -1074,10 +1066,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
     private void transportPhoto(byte[] bytes) {
         Bundle bundle = new Bundle();
-        bundle.putInt(ARG_PARAM1, mFragmentType);
-        bundle.putInt(ARG_PARAM2, mPhotoNumber);
-        bundle.putByteArray("image", bytes);
-        Log.e(TAG, "transportPhoto: " + mFragmentType);
+        bundle.putInt(ARG_TYPE, mFragmentType);
+        bundle.putInt(ARG_NUMBER, mPhotoNumber);
+        bundle.putByteArray(ARG_IMAGE, bytes);
+        bundle.putInt(ARG_LOC_NUM, mLocationNumber);
         mListener.onCameraInteraction(bundle);
     }
 }

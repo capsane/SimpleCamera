@@ -14,6 +14,12 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import static com.capsane.simplecamera.Constants.BUTTON_NEXT;
+import static com.capsane.simplecamera.Constants.BUTTON_RETURN;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MACRO;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MICRO;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_POINT;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -27,20 +33,11 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
 
     private static final String TAG = "PhotoFragment";
 
-    // 微喷墨点拍摄、宏观拍摄、局部拍摄
-    public static final int PHOTO_TYPE_POINT = 1;
-    public static final int PHOTO_TYPE_MACRO = 2;
-    public static final int PHOTO_TYPE_MICRO = 3;
-    public static final int PHOTO_TYPE_LOC = 4;
-
-    public static final int BUTTON_RETURN = 0;
-    public static final int BUTTON_NEXT = 1;
-
-
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "FragmentType";
-    private static final String ARG_PARAM2 = "PhotoNumber";
+    private static final String ARG_TYPE = "FragmentType";
+    private static final String ARG_NUMBER = "PhotoNumber";
+    private static final String ARG_IMAGE = "image";
 
     // TODO: Rename and change types of parameters
     private int mPhotoType;
@@ -48,9 +45,6 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
     private byte[] mBytes;
 
     private onPhotoFragmentListener mListener;
-
-    private Button returnButton;
-    private Button nextButton;
 
     public PhotoFragment() {
         // Required empty public constructor
@@ -68,8 +62,8 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
         PhotoFragment fragment = new PhotoFragment();
         // 为了向Activity传递数据
         Bundle args = new Bundle();
-        args.putInt(ARG_PARAM1, photoType);
-        args.putInt(ARG_PARAM2, photoNumber);
+        args.putInt(ARG_TYPE, photoType);
+        args.putInt(ARG_NUMBER, photoNumber);
         fragment.setArguments(args);
         return fragment;
     }
@@ -78,10 +72,10 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mPhotoType = getArguments().getInt(CameraFragment.ARG_PARAM1);
+            mPhotoType = getArguments().getInt(ARG_TYPE);
             Log.e(TAG, "onCreate: " + mPhotoType);
-            mPhotoNumber = getArguments().getInt(CameraFragment.ARG_PARAM2);
-            mBytes = getArguments().getByteArray("image");
+            mPhotoNumber = getArguments().getInt(ARG_NUMBER);
+            mBytes = getArguments().getByteArray(ARG_IMAGE);
             if (mBytes != null) {
                 Log.e(TAG, "bytes.length: " + mBytes.length);
             } else {
@@ -104,24 +98,24 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
         Log.e(TAG, "onViewCreated");
         ImageView imageView = view.findViewById(R.id.image_view);
         Glide.with(getContext()).load(mBytes).into(imageView);
-        returnButton = view.findViewById(R.id.button_return);
+        Button returnButton = view.findViewById(R.id.button_return);
         returnButton.setOnClickListener(this);
-        nextButton = view.findViewById(R.id.button_next);
+        Button nextButton = view.findViewById(R.id.button_next);
         nextButton.setOnClickListener(this);
         TextView tvTitle = view.findViewById(R.id.photo_fragment_title);
         Log.e(TAG, "onViewCreated: mPhotoType: " + mPhotoType);
         switch (mPhotoType) {
-            case PHOTO_TYPE_POINT:
+            case FRAGMENT_TYPE_POINT:
                 returnButton.setText(R.string.noPoint);
                 nextButton.setText(R.string.hasPoint);
                 tvTitle.setText(R.string.title_point);
                 break;
 
-            case PHOTO_TYPE_MACRO:
+            case FRAGMENT_TYPE_MACRO:
                 tvTitle.setText("宏观" + mPhotoNumber);
                 break;
 
-            case PHOTO_TYPE_MICRO:
+            case FRAGMENT_TYPE_MICRO:
                 tvTitle.setText("微观" + mPhotoNumber);
                 break;
 
@@ -159,7 +153,7 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface onPhotoFragmentListener {
-        void onPhotoInteraction(int photoType, int photoNumber, int code);
+        void onPhotoInteraction(int photoType, int photoNumber, int code, Bundle bundle);
     }
 
 
@@ -168,12 +162,19 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
         switch(view.getId()) {
             case R.id.button_return:
                 Log.e(TAG, "button_return");
-                mListener.onPhotoInteraction(mPhotoType, mPhotoNumber, BUTTON_RETURN);
+                mListener.onPhotoInteraction(mPhotoType, mPhotoNumber, BUTTON_RETURN, null);
                 break;
 
             case R.id.button_next:
                 Log.e(TAG, "button_next");
-                mListener.onPhotoInteraction(mPhotoType, mPhotoNumber, BUTTON_NEXT);
+                Log.e(TAG, "onClick: type:" + mPhotoType + " number:" + mPhotoNumber);
+                //
+                if (mPhotoType == FRAGMENT_TYPE_MICRO) {
+                    Bundle bundle = new Bundle();
+                    bundle.putByteArray("image", mBytes);
+                }
+
+                mListener.onPhotoInteraction(mPhotoType, mPhotoNumber, BUTTON_NEXT, null);
                 break;
         }
     }

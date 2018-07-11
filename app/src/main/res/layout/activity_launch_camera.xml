@@ -1,19 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000"
+    android:orientation="vertical"
     tools:context="com.capsane.simplecamera.LaunchCameraActivity">
 
-    <ImageView
-        android:contentDescription="@string/take_picture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:src="@mipmap/take_picture"
-        />
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        >
 
-</FrameLayout>
+        <ImageView
+            android:contentDescription="@string/take_picture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:src="@mipmap/take_picture"
+            />
+
+    </FrameLayout>
+
+
+
+    <LinearLayout
+        android:id="@+id/linear_menu"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="@color/colorWhite"
+        >
+
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:text="@string/wpmd"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent" />
+
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+
+            android:text="@string/hgqz"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent" />
+
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+
+            android:text="@string/wgqz"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent" />
+
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+
+            android:text="@string/xxlr"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent" />
+
+
+    </LinearLayout>
+
+</LinearLayout>

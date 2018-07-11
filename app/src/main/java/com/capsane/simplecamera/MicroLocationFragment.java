@@ -1,12 +1,28 @@
 package com.capsane.simplecamera;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+
+import static com.capsane.simplecamera.Constants.ARG_IMAGE;
+import static com.capsane.simplecamera.Constants.ARG_LOC_NUM;
+import static com.capsane.simplecamera.Constants.ARG_NUMBER;
+import static com.capsane.simplecamera.Constants.ARG_TYPE;
+import static com.capsane.simplecamera.Constants.BUTTON_LOC1;
+import static com.capsane.simplecamera.Constants.BUTTON_LOC2;
+import static com.capsane.simplecamera.Constants.BUTTON_RETURN;
+import static com.capsane.simplecamera.Constants.BUTTON_NEXT;
 
 
 /**
@@ -17,36 +33,39 @@ import android.view.ViewGroup;
  * Use the {@link MicroLocationFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MicroLocationFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+public class MicroLocationFragment extends Fragment implements View.OnClickListener {
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private static final String TAG = "MicroLocationFragment";
+
+    private int mPhotoType;
+    private int mPhotoNumber;
+    private byte[] mBytes;
+    private int mLocNum;
+
+    private ImageView ivMicro;
+    private ImageView ivLoc1;
+    private ImageView ivLoc2;
+
 
     private OnMicroLocationListener mListener;
 
     public MicroLocationFragment() {
-        // Required empty public constructor
     }
 
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
+     * @param type Parameter 1.
+     * @param number Parameter 2.
      * @return A new instance of fragment MicroLocationFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static MicroLocationFragment newInstance(String param1, String param2) {
+    public static MicroLocationFragment newInstance(int type, int number) {
         MicroLocationFragment fragment = new MicroLocationFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putInt(ARG_TYPE, type);
+        args.putInt(ARG_NUMBER, number);
         fragment.setArguments(args);
         return fragment;
     }
@@ -55,27 +74,77 @@ public class MicroLocationFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            mPhotoType = getArguments().getInt(ARG_TYPE);
+            mPhotoNumber = getArguments().getInt(ARG_NUMBER);
+            mBytes = getArguments().getByteArray(ARG_IMAGE);
+            mLocNum = getArguments().getInt(ARG_LOC_NUM);
+            Log.e(TAG, "onCreate: type: " + mPhotoType + " number:" + mPhotoNumber + "mbytes.len: " + mBytes.length);
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        Log.e(TAG, "onCreateView: ");
         return inflater.inflate(R.layout.fragment_micro_location, container, false);
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onMicroLocationInteraction(uri);
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        TextView tvTitle = view.findViewById(R.id.loc_title);
+        ivMicro = view.findViewById(R.id.image_micro);
+        ivLoc1 = view.findViewById(R.id.image_loc1);
+        ivLoc2 = view.findViewById(R.id.image_loc2);
+
+        ivLoc1.setOnClickListener(this);
+        ivLoc2.setOnClickListener(this);
+
+        Button buttonReturn = view.findViewById(R.id.button_loc_return);
+        Button buttonNext = view.findViewById(R.id.button_loc_next);
+        buttonReturn.setOnClickListener(this);
+        buttonNext.setOnClickListener(this);
+
+        tvTitle.setText("微观" + mPhotoNumber);
+        Log.e(TAG, "onViewCreated: mLocNum: " + mLocNum);
+        switch (mLocNum) {
+            case 1:
+                Glide.with(getContext()).load(mBytes).into(ivLoc1);
+                break;
+            case 2:
+                Glide.with(getContext()).load(mBytes).into(ivLoc2);
+                break;
+            default:
+                Glide.with(getContext()).load(mBytes).into(ivMicro);
         }
+
+
+
+    }
+
+    @Override
+    public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
+
+        Log.e(TAG, "onCreateAnimation: ");
+        refresh();
+        return super.onCreateAnimation(transit, enter, nextAnim);
+    }
+
+    @Override
+    public void onResume() {
+        Log.e(TAG, "onResume: ");
+        super.onResume();
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        Log.e(TAG, "onHiddenChanged: ");
+        super.onHiddenChanged(hidden);
     }
 
     @Override
     public void onAttach(Context context) {
+        Log.e(TAG, "onAttach: ");
         super.onAttach(context);
         if (context instanceof OnMicroLocationListener) {
             mListener = (OnMicroLocationListener) context;
@@ -87,6 +156,7 @@ public class MicroLocationFragment extends Fragment {
 
     @Override
     public void onDetach() {
+        Log.e(TAG, "onDetach: ");
         super.onDetach();
         mListener = null;
     }
@@ -102,7 +172,49 @@ public class MicroLocationFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnMicroLocationListener {
-        // TODO: Update argument type and name
-        void onMicroLocationInteraction(Uri uri);
+        void onMicroLocationInteraction(int photoType, int photoNumber, int code);
     }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.button_loc_return:
+                mListener.onMicroLocationInteraction(mPhotoType, mPhotoNumber, BUTTON_RETURN);
+                break;
+            case R.id.button_loc_next:
+                mListener.onMicroLocationInteraction(mPhotoType, mPhotoNumber, BUTTON_NEXT);
+                break;
+
+            case R.id.image_loc1:
+                mListener.onMicroLocationInteraction(mPhotoType, mPhotoNumber, BUTTON_LOC1);
+                break;
+            case R.id.image_loc2:
+                mListener.onMicroLocationInteraction(mPhotoType, mPhotoNumber, BUTTON_LOC2);
+                break;
+        }
+    }
+
+    private void refresh() {
+        // capsane：　添加loc1, loc2
+        if (getArguments() != null) {
+            mPhotoType = getArguments().getInt(ARG_TYPE);
+            mPhotoNumber = getArguments().getInt(ARG_NUMBER);
+            mBytes = getArguments().getByteArray(ARG_IMAGE);
+            mLocNum = getArguments().getInt(ARG_LOC_NUM);
+            Log.e(TAG, "refresh: type: " + mPhotoType + " number:" + mPhotoNumber + "mbytes.len: " + mBytes.length);
+            switch (mLocNum) {
+                case 1:
+                    Glide.with(getContext()).load(mBytes).into(ivLoc1);
+                    break;
+                case 2:
+                    Glide.with(getContext()).load(mBytes).into(ivLoc2);
+                    break;
+                default:
+                    Glide.with(getContext()).load(mBytes).into(ivMicro);
+            }
+        } else {
+            Log.e(TAG, "refresh: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEError");
+        }
+    }
+
 }

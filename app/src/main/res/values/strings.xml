@@ -117,5 +117,10 @@
     <string name="nextMicroLoc">next micro loc</string>
 
 
+    <string name="wpmd">微喷墨点</string>
+    <string name="hgqz">宏观取证</string>
+    <string name="wgqz">微观取证</string>
+    <string name="xxlr">信息录入</string>
+
 
 </resources>
