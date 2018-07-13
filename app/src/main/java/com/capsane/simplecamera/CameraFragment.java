@@ -61,6 +61,8 @@ import static com.capsane.simplecamera.Constants.ARG_IMAGE;
 import static com.capsane.simplecamera.Constants.ARG_LOC_NUM;
 import static com.capsane.simplecamera.Constants.ARG_NUMBER;
 import static com.capsane.simplecamera.Constants.ARG_TYPE;
+import static com.capsane.simplecamera.Constants.CAMERA_ID_OUTSIDE;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_Comp;
 import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_LOC;
 import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MACRO;
 import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MICRO;
@@ -326,7 +328,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             return Collections.max(notBigEnough, new CompareSizesByArea());
         } else {
             Log.e(TAG, "Couldn't find any suitable preview size");
+            Log.e(TAG, "choices[0]: " + choices[0]);
             return choices[0];
+//            Size size = new Size(2200, 1200);
+//            return size;
         }
     }
 
@@ -438,6 +443,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         // a camera and start preview from here (otherwise, we wait until the surface is ready in
         // the SurfaceTextureListener).
         if (mTextureView.isAvailable()) {
+            Log.e(TAG, "openCamera("+mTextureView.getWidth() + "," + mTextureView.getHeight() +")");
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
@@ -476,31 +482,37 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
      * @param height The height of available size for camera preview
      */
     @SuppressWarnings("SuspiciousNameCombination")
-    private void setUpCameraOutputs(int width, int height) {
+    private void setUpCameraOutputs(int width, int height, String cameraId) {
         Activity activity = getActivity();
         CameraManager manager = (CameraManager) activity.getSystemService(Context.CAMERA_SERVICE);
         try {
-            for (String cameraId : manager.getCameraIdList()) {
+            // TODO: 一共就两个相机，以后分别保存参数
+//            for (String cameraId : manager.getCameraIdList()) {
                 CameraCharacteristics characteristics
                         = manager.getCameraCharacteristics(cameraId);
                 Log.e(TAG, "setUpCameraOutputs: id: " + cameraId);
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                    continue;
+                    // TODO: CAMERA_ID_OUTSIDE为前置摄像头，所以图像是反的
+                    Log.e(TAG, "前置摄像头！！！！");
+//                    continue;
                 }
 
                 StreamConfigurationMap map = characteristics.get(
                         CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
                 if (map == null) {
-                    continue;
+                    Log.e(TAG, "map == null!!!!!!!!");
+//                    continue;
                 }
 
                 // For still image captures, we use the largest available size.
-                Size largest = Collections.max(
-                        Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
+                Size largest = Collections.max(Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
                         new CompareSizesByArea());
+                Log.e(TAG, "largest: " + largest);
+
                 // FIXME: Hit timeout for jpeg callback! 2 -> 4
+
                 mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
                         ImageFormat.JPEG, /*maxImages*/15);
                 mImageReader.setOnImageAvailableListener(
@@ -509,8 +521,10 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 // Find out if we need to swap dimension to get the preview size relative to sensor
                 // coordinate.
                 int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+                Log.e(TAG, "displayRotation: " + displayRotation);
                 //noinspection ConstantConditions
                 mSensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                Log.e(TAG, "mSensorOrientation: "+ mSensorOrientation);
                 boolean swappedDimensions = false;
                 switch (displayRotation) {
                     case Surface.ROTATION_0:
@@ -531,12 +545,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
                 Point displaySize = new Point();
                 activity.getWindowManager().getDefaultDisplay().getSize(displaySize);
+                Log.e(TAG, "displaySize: " + displaySize);
+
                 int rotatedPreviewWidth = width;
                 int rotatedPreviewHeight = height;
                 int maxPreviewWidth = displaySize.x;
                 int maxPreviewHeight = displaySize.y;
 
                 if (swappedDimensions) {
+                    Log.e(TAG, "swappedDimensions: ");
                     rotatedPreviewWidth = height;
                     rotatedPreviewHeight = width;
                     maxPreviewWidth = displaySize.y;
@@ -551,19 +568,23 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                     maxPreviewHeight = MAX_PREVIEW_HEIGHT;
                 }
 
+                Log.e(TAG, "maxPreviewWidth: " + maxPreviewWidth + ", maxPreviewHeight: " + maxPreviewHeight);
+
                 // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
                 // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
                 // garbage capture data.
                 mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
                         rotatedPreviewWidth, rotatedPreviewHeight, maxPreviewWidth,
                         maxPreviewHeight, largest);
-
+                Log.e(TAG, "mPreviewSize: " + mPreviewSize);
                 // We fit the aspect ratio of TextureView to the size of preview we picked.
                 int orientation = getResources().getConfiguration().orientation;
                 if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    Log.e(TAG, "orientation == Configuration.ORIENTATION_LANDSCAPE: ");
                     mTextureView.setAspectRatio(
                             mPreviewSize.getWidth(), mPreviewSize.getHeight());
                 } else {
+                    Log.e(TAG, "orientation != Configuration.ORIENTATION_LANDSCAPE: ");
                     mTextureView.setAspectRatio(
                             mPreviewSize.getHeight(), mPreviewSize.getWidth());
                 }
@@ -572,10 +593,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                 Boolean available = characteristics.get(CameraCharacteristics.FLASH_INFO_AVAILABLE);
                 mFlashSupported = available == null ? false : available;
 
-                mCameraId = cameraId;
-                // capsane
                 return;
-            }
+//            }
         } catch (CameraAccessException e) {
             e.printStackTrace();
         } catch (NullPointerException e) {
@@ -590,11 +609,22 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private void openCamera(int width, int height) {
         if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestCameraPermission();
-            // TODO:??
             return;
         }
+
+        Log.e(TAG, "mFragmentType: " + mFragmentType);
+        // 设置打开的摄像头
+        if (mFragmentType == FRAGMENT_TYPE_MACRO || mFragmentType == FRAGMENT_TYPE_LOC) {
+            mCameraId = Constants.CAMERA_ID_INSIDE;
+        } else if (mFragmentType == FRAGMENT_TYPE_POINT || mFragmentType == FRAGMENT_TYPE_MICRO
+                || mFragmentType == FRAGMENT_TYPE_Comp) {
+            mCameraId = Constants.CAMERA_ID_OUTSIDE;
+        } else {
+            showToast("Error mFragmentType while set up camera id");
+        }
+
         // 创建相机输出,预览图像和拍照的图片要作不同的处理
-        setUpCameraOutputs(width, height);
+        setUpCameraOutputs(width, height, mCameraId);
         // 配置格式转换,根据当前的设备屏幕环境
         configureTransform(width, height);
 
@@ -604,15 +634,11 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             if (!mCameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening");
             }
+
+            Log.e(TAG, "mFragmentType: " + mFragmentType);
+
             Log.e(TAG, "openCamera: " + mCameraId);
 
-            if (mFragmentType == FRAGMENT_TYPE_MACRO || mFragmentType == FRAGMENT_TYPE_LOC) {
-                mCameraId = Constants.CAMERA_ID_INSIDE;
-            } else if (mFragmentType == FRAGMENT_TYPE_POINT || mFragmentType == FRAGMENT_TYPE_MICRO) {
-                mCameraId = Constants.CAMERA_ID_OUTSIDE;
-            } else {
-                showToast("Error mFragmentType while set up camera id");
-            }
             if (manager != null) {
                 manager.openCamera(mCameraId, mStateCallback, mBackgroundHandler);
             } else {
@@ -741,6 +767,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
      * @param viewHeight The height of `mTextureView`
      */
     private void configureTransform(int viewWidth, int viewHeight) {
+        Log.e(TAG, "configureTransform mPreviewSize: " + mPreviewSize);
         Activity activity = getActivity();
         if (null == mTextureView || null == mPreviewSize || null == activity) {
             return;
@@ -748,18 +775,47 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
         Matrix matrix = new Matrix();
         RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
+        Log.e(TAG, "viewRect: " + viewWidth + " " + viewHeight);
+
         RectF bufferRect = new RectF(0, 0, mPreviewSize.getHeight(), mPreviewSize.getWidth());
+        Log.e(TAG, "bufferRect: " + mPreviewSize.getHeight() + "" + mPreviewSize.getWidth());
+
         float centerX = viewRect.centerX();
         float centerY = viewRect.centerY();
+        Log.e(TAG, "centerX: "+ centerX + ",centerY: " + centerY);
+
+
+        Log.e(TAG, "configureTransform: " + rotation);
+        // 竖屏
         if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+            // 移动bufferRect,使中心和viewRect重合
             bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
+            // 将viewRect变换成bufferRect，可能会改变比例
             matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+
+            // 计算最大的缩放比例
             float scale = Math.max(
                     (float) viewHeight / mPreviewSize.getHeight(),
                     (float) viewWidth / mPreviewSize.getWidth());
+
+            // 以scale比例缩放
             matrix.postScale(scale, scale, centerX, centerY);
-            matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+
+            if (mCameraId.equals(CAMERA_ID_OUTSIDE)) {
+                // 前置摄像头, 图像颠倒
+                matrix.postRotate(270 * (rotation - 2), centerX, centerY);
+                // 左右镜像
+                matrix.postScale(-1, 1, centerX, centerY);
+            } else {
+                // 保证拍摄的图像和预览一致
+                matrix.postRotate(90 * (rotation - 2), centerX, centerY);
+            }
+
+
+
+
         } else if (Surface.ROTATION_180 == rotation) {
+            Log.e(TAG, "configureTransform: CAMERA_ID_OUTSIDE");
             matrix.postRotate(180, centerX, centerY);
         }
         mTextureView.setTransform(matrix);
@@ -833,6 +889,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
             // Orientation
             int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+
+            // FIXME: capsane
+
             captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(rotation));
 
             CameraCaptureSession.CaptureCallback CaptureCallback

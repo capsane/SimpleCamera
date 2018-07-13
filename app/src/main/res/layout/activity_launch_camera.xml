@@ -64,6 +64,14 @@
             android:layout_weight="1"
             android:layout_height="match_parent" />
 
+        <Button
+            style="?android:attr/buttonBarButtonStyle"
+            android:id="@+id/btn_menu_compare"
+            android:text="@string/ksbd"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent" />
+
 
     </LinearLayout>
 

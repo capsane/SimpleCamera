@@ -26,7 +26,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".LaunchCameraActivity" />
-        <activity android:name=".RecordActivity"></activity>
+        <activity android:name=".RecordActivity" />
+        <activity android:name=".OpenCVActivity"></activity>
     </application>
 
 </manifest>

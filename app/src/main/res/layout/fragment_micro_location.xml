@@ -1,5 +1,6 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/colorWhite"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -33,7 +34,7 @@
         app:layout_constraintTop_toTopOf="@+id/guidline_h_top" />
 
     <ImageView
-        android:src="@mipmap/ic_launcher"
+        android:src="@mipmap/take_picture"
         android:id="@+id/image_loc1"
         android:layout_width="200dp"
         android:layout_height="400dp"
@@ -44,7 +45,7 @@
         app:layout_constraintTop_toTopOf="@+id/guidline_h_top" />
 
     <ImageView
-        android:src="@mipmap/ic_launcher"
+        android:src="@mipmap/take_picture"
         android:id="@+id/image_loc2"
         android:layout_width="200dp"
         android:layout_height="400dp"

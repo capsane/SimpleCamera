@@ -1,11 +1,17 @@
 package com.capsane.simplecamera;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.OpenCVLoader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +22,7 @@ import static com.capsane.simplecamera.Constants.BUTTON_LOC1;
 import static com.capsane.simplecamera.Constants.BUTTON_LOC2;
 import static com.capsane.simplecamera.Constants.BUTTON_NEXT;
 import static com.capsane.simplecamera.Constants.BUTTON_RETURN;
+import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_Comp;
 import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_LOC;
 import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MACRO;
 import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MICRO;
@@ -24,7 +31,8 @@ import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_POINT;
 
 public class LaunchCameraActivity extends AppCompatActivity implements
         CameraFragment.OnCameraFragmentListener, PhotoFragment.onPhotoFragmentListener,
-        MicroLocationFragment.OnMicroLocationListener {
+        CompareFragment.OnCompareFragmentListener, MicroLocationFragment.OnMicroLocationListener,
+        View.OnClickListener {
 
     private static final String TAG = "LaunchCameraActivity";
 
@@ -46,7 +54,36 @@ public class LaunchCameraActivity extends AppCompatActivity implements
                             FRAGMENT_TYPE_POINT, 1, -1))
                     .commit();
         }
+
+        Button buttonCompare = findViewById(R.id.btn_menu_compare);
+        buttonCompare.setOnClickListener(this);
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_13, getApplicationContext(), mLoaderCallback);
+        Log.e(TAG, "onResume success load OpenCV...");
+    }
+
+    //OpenCV库加载并初始化成功后的回调函数
+    private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
+
+        @Override
+        public void onManagerConnected(int status) {
+            Log.e(TAG, "onManagerConnected: ");
+            switch (status) {
+                case BaseLoaderCallback.SUCCESS:
+                    Log.i(TAG, "成功加载");
+                    break;
+                default:
+                    super.onManagerConnected(status);
+                    Log.i(TAG, "加载失败");
+                    break;
+            }
+        }
+    };
+
 
     // OnFragmentInteractionListener接口的回调，用于Activity和Fragment之间的通讯
     @Override
@@ -58,7 +95,6 @@ public class LaunchCameraActivity extends AppCompatActivity implements
 
         if (photoType == FRAGMENT_TYPE_MICRO) {
             // Camera -> Loc, add to Micro
-
             FragmentTransaction mFragmentTransaction = getSupportFragmentManager().beginTransaction();
             Log.e(TAG, "tag: " + tempTag);
 
@@ -81,6 +117,20 @@ public class LaunchCameraActivity extends AppCompatActivity implements
             mFragmentTransaction.replace(R.id.container, microLocationFragment);
             mFragmentTransaction.show(microLocationFragment);
             mFragmentTransaction.commit();
+        } else if (photoType == FRAGMENT_TYPE_Comp) {
+            // 跳转到比对页面，填充待比对图片
+            tempTag = "" + FRAGMENT_TYPE_Comp;
+            FragmentTransaction mFragmentTransaction = getSupportFragmentManager().beginTransaction();
+            if (fragmentMap.containsKey(tempTag)) {
+                CompareFragment compareFragment = (CompareFragment)fragmentMap.get(tempTag);
+                compareFragment.setArguments(bundle);
+                mFragmentTransaction.replace(R.id.container, compareFragment);
+                mFragmentTransaction.show(compareFragment);
+                mFragmentTransaction.commit();
+            } else {
+                Log.e(TAG, "map中没有tempTag = 4 的 compareFragment");
+            }
+
         } else {
             // photo页面replace cameraFragment
             if (!fragmentMap.containsKey(tempTag)) {
@@ -235,4 +285,80 @@ public class LaunchCameraActivity extends AppCompatActivity implements
 
 
     }
+
+
+    @Override
+    public void onFragmentInteraction(int photoType, int photoNumber, int code) {
+        tempTag = "" + FRAGMENT_TYPE_Comp;
+        switch (code) {
+            // 比对图片1
+            case BUTTON_LOC1:
+                Log.e(TAG, "比对图片1: ");
+                FragmentTransaction mFragmentTransaction = getSupportFragmentManager().beginTransaction();
+                // TODO: hide
+                if (fragmentMap.containsKey(tempTag)) {
+                    mFragmentTransaction.hide(fragmentMap.get(tempTag));
+                }
+
+                mFragmentTransaction.add(R.id.container, CameraFragment.newInstance(FRAGMENT_TYPE_Comp, photoNumber, 1));
+                mFragmentTransaction.commit();
+                break;
+            case BUTTON_LOC2:
+                Log.e(TAG, "比对图片2: ");
+                mFragmentTransaction = getSupportFragmentManager().beginTransaction();
+                // TODO: hide
+                if (fragmentMap.containsKey(tempTag)) {
+                    mFragmentTransaction.hide(fragmentMap.get(tempTag));
+                }
+
+                mFragmentTransaction.add(R.id.container, CameraFragment.newInstance(FRAGMENT_TYPE_Comp, photoNumber, 2));
+                mFragmentTransaction.commit();
+                break;
+
+
+        }
+    }
+
+    @Override
+    public void onClick(View view) {
+        // TODO: Menu button
+        Log.e(TAG, "onClick: ");
+        switch (view.getId()) {
+            // 快速比对窗口tempTag = 4
+            case R.id.btn_menu_compare:
+                Log.e(TAG, "onClick: 比对");
+                // 启动快速比对fragment
+                tempTag = "" + FRAGMENT_TYPE_Comp;
+                FragmentTransaction mFragmentTransaction = getSupportFragmentManager().beginTransaction();
+
+                if (!fragmentMap.containsKey(tempTag)) {
+                    CompareFragment compareFragment = CompareFragment.newInstance(500, 0);
+                    fragmentMap.put(tempTag, compareFragment);
+                }
+                mFragmentTransaction.replace(R.id.container, fragmentMap.get(tempTag), tempTag);
+                mFragmentTransaction.commit();
+                break;
+
+        }
+    }
+
+
+    private void hideAllFragmentsExcept(String tag) {
+
+        if (fragmentMap.isEmpty()) {
+            return;
+        }
+
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+
+        for (Map.Entry<String, Fragment> entry : fragmentMap.entrySet()) {
+            String key = entry.getKey();
+            Fragment fragment = entry.getValue();
+            if (!key.equals(tag)) {
+                fragmentTransaction.hide(fragment);
+            }
+        }
+        fragmentTransaction.commit();
+    }
+
 }

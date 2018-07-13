@@ -2,6 +2,7 @@ package com.capsane.simplecamera;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 
 /**
@@ -10,6 +11,8 @@ import android.view.TextureView;
  */
 
 public class AutoFitTextureView extends TextureView {
+
+    private static final String TAG  = "AutoFitTextureView";
 
     private int mRationWidth = 0;
     private int mRationHeight = 0;
@@ -37,6 +40,7 @@ public class AutoFitTextureView extends TextureView {
         mRationWidth = width;
         mRationHeight = height;
         // TODO: 自定义控件涉及到View的大小变化时，要求重新执行View的绘制中的layout
+        Log.e(TAG, "setAspectRatio: " + width + "," + height);
         requestLayout();
     }
 

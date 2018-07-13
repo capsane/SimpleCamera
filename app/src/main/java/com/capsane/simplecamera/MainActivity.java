@@ -6,14 +6,18 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
 
     // TODO: 后台检测外置摄像头是否连接
 
@@ -22,7 +26,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-                /*capsane: 获取摄像头数量*/
+        WindowManager wm =(WindowManager)getSystemService(WINDOW_SERVICE);
+        DisplayMetrics dm = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(dm);
+        int width = dm.widthPixels;
+        int height = dm.heightPixels;
+        Log.e(TAG, "width*height: " + width + "*" + height);
+
+        /*capsane: 获取摄像头数量*/
         int cameraCount = Camera.getNumberOfCameras();
         Toast.makeText(getApplicationContext(), "你的手机一共有" + cameraCount + "个摄像头", Toast.LENGTH_SHORT).show();
         Log.e("123", "camera count: " + cameraCount);
@@ -36,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent();
-                intent.setClass(MainActivity.this, LaunchCameraActivity.class);
+                intent.setClass(MainActivity.this, OpenCVActivity.class);
                 startActivity(intent);
             }
         });

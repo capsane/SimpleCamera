@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <TextView
+        android:id="@+id/cv_title"
+        android:text="OpenCV Test"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        />
+
+    <ImageView
+        android:id="@+id/img"
+        android:layout_centerInParent="true"
+        android:background="@color/colorControlBackground"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/cv_title"
+        app:layout_constraintBottom_toTopOf="@+id/gline_hori1"
+        />
+
+    <Button
+        android:id="@+id/btn_gray"
+        app:layout_constraintTop_toBottomOf="@+id/img"
+        android:text="灰度化"
+        app:layout_constraintTop_toTopOf="@id/gline_hori1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/btn_orb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btn_orb"
+        app:layout_constraintTop_toBottomOf="@+id/img"
+        android:text="orb"
+        app:layout_constraintTop_toTopOf="@id/gline_hori1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/btn_gray"
+        app:layout_constraintEnd_toEndOf="@id/btn_brisk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btn_brisk"
+        app:layout_constraintTop_toBottomOf="@+id/img"
+        android:text="brisk"
+        app:layout_constraintTop_toTopOf="@id/gline_hori1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/btn_orb"
+        app:layout_constraintEnd_toEndOf="@id/btn_match"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/btn_match"
+        app:layout_constraintTop_toBottomOf="@+id/img"
+        android:text="match"
+        app:layout_constraintTop_toTopOf="@id/gline_hori1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/btn_brisk"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/gline_hori1"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintGuide_percent="0.9"
+        />
+
+
+
+</android.support.constraint.ConstraintLayout>

@@ -13,13 +13,14 @@ class Constants {
 
     // 摄像头Id
     static final String CAMERA_ID_INSIDE = "0";
-    static final String CAMERA_ID_OUTSIDE = "1";
+    static final String CAMERA_ID_OUTSIDE = "0";
 
     // 微喷墨点拍摄、宏观拍摄、局部拍摄
     static final int FRAGMENT_TYPE_POINT = 1;
     static final int FRAGMENT_TYPE_MACRO = 2;
     static final int FRAGMENT_TYPE_MICRO = 3;
     static final int FRAGMENT_TYPE_LOC = 4;
+    static final int FRAGMENT_TYPE_Comp = 7;
 
     // fragment type(photo type)
     static final String ARG_TYPE = "FragmentType";
