@@ -1,5 +1,6 @@
 package com.capsane.simplecamera;
 
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -15,6 +16,10 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
@@ -23,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 每次打开程序，在本程序目录，新建一个文件夹，为当前时间
+        Globals.initSaveDir(getExternalFilesDir(null));
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 

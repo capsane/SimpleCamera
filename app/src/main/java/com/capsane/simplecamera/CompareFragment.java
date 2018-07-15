@@ -167,6 +167,11 @@ public class CompareFragment extends Fragment implements View.OnClickListener{
         mListener = null;
     }
 
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        Log.e(TAG, "onHiddenChanged: ");
+        super.onHiddenChanged(hidden);
+    }
 
     /**
      * This interface must be implemented by activities that contain this
@@ -180,7 +185,7 @@ public class CompareFragment extends Fragment implements View.OnClickListener{
      */
     public interface OnCompareFragmentListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction(int photoType, int photoNumber, int code);
+        void onCompareInteraction(int photoType, int photoNumber, int code);
     }
 
     @Override
@@ -188,13 +193,13 @@ public class CompareFragment extends Fragment implements View.OnClickListener{
         switch (view.getId()) {
             case R.id.compare_iv1:
                 Log.e(TAG, "onClick: loc1");
-                mListener.onFragmentInteraction(mPhotoType, mPhotoNumber, BUTTON_LOC1);
+                mListener.onCompareInteraction(mPhotoType, mPhotoNumber, BUTTON_LOC1);
 
 
                 break;
             case R.id.compare_iv2:
                 Log.e(TAG, "onClick: loc2");
-                mListener.onFragmentInteraction(mPhotoType, mPhotoNumber, BUTTON_LOC2);
+                mListener.onCompareInteraction(mPhotoType, mPhotoNumber, BUTTON_LOC2);
 
                 break;
             case R.id.button_compare:

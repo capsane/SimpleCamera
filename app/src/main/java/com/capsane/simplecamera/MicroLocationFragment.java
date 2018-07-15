@@ -124,9 +124,7 @@ public class MicroLocationFragment extends Fragment implements View.OnClickListe
 
     @Override
     public Animation onCreateAnimation(int transit, boolean enter, int nextAnim) {
-
-        Log.e(TAG, "onCreateAnimation: ");
-        refresh();
+        Log.e(TAG, "onCreateAnimation: do nothing");
         return super.onCreateAnimation(transit, enter, nextAnim);
     }
 
@@ -139,6 +137,7 @@ public class MicroLocationFragment extends Fragment implements View.OnClickListe
     @Override
     public void onHiddenChanged(boolean hidden) {
         Log.e(TAG, "onHiddenChanged: ");
+        refresh();
         super.onHiddenChanged(hidden);
     }
 
@@ -210,7 +209,10 @@ public class MicroLocationFragment extends Fragment implements View.OnClickListe
                     Glide.with(getContext()).load(mBytes).into(ivLoc2);
                     break;
                 default:
+                    // FIXME: 如果重新拍摄micro,则同时重置loc
                     Glide.with(getContext()).load(mBytes).into(ivMicro);
+                    Glide.with(getContext()).load(R.mipmap.take_picture).into(ivLoc1);
+                    Glide.with(getContext()).load(R.mipmap.take_picture).into(ivLoc2);
             }
         } else {
             Log.e(TAG, "refresh: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEError");

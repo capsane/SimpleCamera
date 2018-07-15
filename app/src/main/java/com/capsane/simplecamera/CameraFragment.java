@@ -26,6 +26,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
@@ -44,6 +45,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -78,6 +81,11 @@ import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_POINT;
  * create an instance of this fragment.
  */
 public class CameraFragment extends Fragment implements View.OnClickListener, ActivityCompat.OnRequestPermissionsResultCallback {
+
+    // 系统相册目录
+    public static final String GalleryPath = Environment.getExternalStorageDirectory() + File.separator
+            + Environment.DIRECTORY_DCIM  + File.separator;
+
     private static final String TAG = "CameraFragment";
 
     private int mFragmentType;
@@ -208,7 +216,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     };
 
     private CameraCaptureSession mCaptureSession;
-    // FIXME: 没有回调？
+
     private CameraCaptureSession.CaptureCallback mCaptureCallback = new CameraCaptureSession.CaptureCallback() {
 
         private void process(CaptureResult result) {
@@ -342,13 +350,30 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     private File mSaveFile;
     // 处理静态图片拍摄, 当图片可以保存的时候，触发onImageAvailable回调,使用后台线程保存图片
     private ImageReader mImageReader;
+
     private final ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader imageReader) {
-//            Log.e(TAG, "onImageAvailable: ");
+
             // 保存图片， 此时可以预览，切换fragment
+            if (Globals.GlobalSaveDirName == null) {
+                showToast("GlobalSaveDirName 竟然为空!!!!!");
+            }
+            File dir = new File(Globals.GlobalSaveDirPath);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            if (mLocationNumber > 0) {
+                mSaveFile = new File(dir,
+                        mFragmentType + "_" + mPhotoNumber + "_" + mLocationNumber + ".jpg");
+            } else {
+                mSaveFile = new File(dir,
+                        mFragmentType + "_" + mPhotoNumber + ".jpg");
+            }
+            // 提交给后台保存，同时关闭相机
             mBackgroundHandler.post(new ImageSaver(imageReader.acquireNextImage(), mSaveFile));
-            // FIXME: 记得关闭当前Fragment的Camera，bug关闭的太早，导致ImageReader在图片获取前就关闭了
+            // FIXME: 记得关闭当前Fragment的Camera. bug:关闭的太早，导致ImageReader在图片获取前就关闭了
             closeCamera();
         }
     };
@@ -447,6 +472,48 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             openCamera(mTextureView.getWidth(), mTextureView.getHeight());
         } else {
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+        }
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+
+        if (hidden) {
+            Log.e(TAG, "onHiddenChanged: hide");
+            // 隐藏
+            // onPause
+            closeCamera();
+            stopBackgroundThread();
+        } else {
+            Log.e(TAG, "onHiddenChanged: show");
+            // FIXME: 重新初始化相机状态
+            mState = STATE_PREVIEW;
+
+
+            // 显示
+            if (getArguments() != null) {
+                mFragmentType = getArguments().getInt(ARG_TYPE);
+                mPhotoNumber = getArguments().getInt(ARG_NUMBER);
+                mLocationNumber = getArguments().getInt(ARG_LOC_NUM);
+
+                // onResume
+                startBackgroundThread();
+                // When the screen is turned off and turned back on, the SurfaceTexture is already
+                // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
+                // a camera and start preview from here (otherwise, we wait until the surface is ready in
+                // the SurfaceTextureListener).
+                if (mTextureView.isAvailable()) {
+                    Log.e(TAG, "openCamera("+mTextureView.getWidth() + "," + mTextureView.getHeight() +")");
+                    openCamera(mTextureView.getWidth(), mTextureView.getHeight());
+                } else {
+                    mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
+                }
+
+            } else {
+                Log.e(TAG, "refresh: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEError");
+            }
+
         }
     }
 
@@ -684,6 +751,9 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     }
 
     private void stopBackgroundThread() {
+        if (mBackgroundThread == null) {
+            return;
+        }
         mBackgroundThread.quitSafely();
         try {
             mBackgroundThread.join();
@@ -823,7 +893,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
 
     private void takePicture() {
-        Log.d(TAG, "takePicture(): ");
+        Log.e(TAG, "takePicture(): ");
         lockFocus();
     }
 
@@ -949,6 +1019,7 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.button_take_picture: {
+                Log.e(TAG, "onClick: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 takePicture();
                 break;
             }
@@ -965,6 +1036,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
 
     /**
      * Saves a JPEG {@link Image} into the specified {@link File}.
+     * FIXME: 保存图片到相册
+     *
      */
     private class ImageSaver implements Runnable {
 
@@ -987,8 +1060,15 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
             ByteBuffer buffer = mImage.getPlanes()[0].getBuffer();
             byte[] bytes = new byte[buffer.remaining()];
             buffer.get(bytes);
+
+            // FIXME: 开两个线程，一个保存图片，一个传递
+            // 1. 跳转fragment，传递拍摄的photo
+            transportPhoto(bytes);
+
+            // 2. 保存图片
             FileOutputStream output = null;
             try {
+                Log.e(TAG, "保存: " + mFile.toString());
                 output = new FileOutputStream(mFile);
                 output.write(bytes);
             } catch (IOException e) {
@@ -1003,13 +1083,8 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
                     }
                 }
             }
-            Log.e(TAG, "run: finished!");
-
-            // 跳转fragment，传递拍摄的photo
-            // FIXME: 开两个线程，一个保存图片，一个传递
-            transportPhoto(bytes);
+            Log.e(TAG, "Save photo finished!");
         }
-
     }
 
     /**
@@ -1131,4 +1206,33 @@ public class CameraFragment extends Fragment implements View.OnClickListener, Ac
         bundle.putInt(ARG_LOC_NUM, mLocationNumber);
         mListener.onCameraInteraction(bundle);
     }
+
+    @Override
+    public void onStart() {
+        Log.e(TAG, "onStart: ");
+        super.onStart();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        Log.e(TAG, "onSaveInstanceState: ");
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
+        Log.e(TAG, "onViewStateRestored: ");
+        super.onViewStateRestored(savedInstanceState);
+    }
+
+    @Override
+    public void onDestroyView() {
+        // 销毁fragment
+        Log.e(TAG, "onDestroyView: ");
+        super.onDestroyView();
+    }
+
+
+
+
 }

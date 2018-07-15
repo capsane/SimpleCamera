@@ -14,6 +14,10 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import static com.capsane.simplecamera.Constants.ARG_IMAGE;
+import static com.capsane.simplecamera.Constants.ARG_LOC_NUM;
+import static com.capsane.simplecamera.Constants.ARG_NUMBER;
+import static com.capsane.simplecamera.Constants.ARG_TYPE;
 import static com.capsane.simplecamera.Constants.BUTTON_NEXT;
 import static com.capsane.simplecamera.Constants.BUTTON_RETURN;
 import static com.capsane.simplecamera.Constants.FRAGMENT_TYPE_MACRO;
@@ -33,21 +37,19 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
 
     private static final String TAG = "PhotoFragment";
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_TYPE = "FragmentType";
     private static final String ARG_NUMBER = "PhotoNumber";
     private static final String ARG_IMAGE = "image";
 
-    // TODO: Rename and change types of parameters
     private int mPhotoType;
     private int mPhotoNumber;
     private byte[] mBytes;
 
+    private ImageView imageView;
+
     private onPhotoFragmentListener mListener;
 
     public PhotoFragment() {
-        // Required empty public constructor
     }
 
     /**
@@ -96,7 +98,7 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         Log.e(TAG, "onViewCreated");
-        ImageView imageView = view.findViewById(R.id.image_view);
+        imageView = view.findViewById(R.id.image_view);
         Glide.with(getContext()).load(mBytes).into(imageView);
         Button returnButton = view.findViewById(R.id.button_return);
         returnButton.setOnClickListener(this);
@@ -142,6 +144,13 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
     }
 
 
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        Log.e(TAG, "onHiddenChanged: ");
+        refresh();
+        super.onHiddenChanged(hidden);
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -176,6 +185,19 @@ public class PhotoFragment extends Fragment implements View.OnClickListener {
 
                 mListener.onPhotoInteraction(mPhotoType, mPhotoNumber, BUTTON_NEXT, null);
                 break;
+        }
+    }
+
+    private void refresh() {
+        // FIXME: 判断是否需要进行刷新，防止Glide重新加载原来的图片
+        if (getArguments() != null) {
+            mPhotoType = getArguments().getInt(ARG_TYPE);
+            mPhotoNumber = getArguments().getInt(ARG_NUMBER);
+            mBytes = getArguments().getByteArray(ARG_IMAGE);
+            Log.e(TAG, "refresh: type: " + mPhotoType + " number:" + mPhotoNumber + "mbytes.len: " + mBytes.length);
+            Glide.with(getContext()).load(mBytes).into(imageView);
+        } else {
+            Log.e(TAG, "refresh: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEError");
         }
     }
 }

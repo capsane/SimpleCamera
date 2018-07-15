@@ -36,12 +36,15 @@
         <Button
             style="?android:attr/buttonBarButtonStyle"
             android:text="@string/wpmd"
+            android:id="@+id/btn_menu_point"
+
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent" />
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
+            android:id="@+id/btn_menu_macro"
 
             android:text="@string/hgqz"
             android:layout_width="0dp"
@@ -50,6 +53,7 @@
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
+            android:id="@+id/btn_menu_micro"
 
             android:text="@string/wgqz"
             android:layout_width="0dp"
@@ -58,7 +62,7 @@
 
         <Button
             style="?android:attr/buttonBarButtonStyle"
-
+            android:id="@+id/btn_menu_record"
             android:text="@string/xxlr"
             android:layout_width="0dp"
             android:layout_weight="1"

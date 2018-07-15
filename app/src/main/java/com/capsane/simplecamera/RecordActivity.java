@@ -37,6 +37,9 @@ public class RecordActivity extends AppCompatActivity implements View.OnClickLis
         artId = etArtId.getText().toString();
         humanName = etHumanName.getText().toString();
         saveRecord();
+
+        //FIXME: 本次采集结束，记得将MainActivity中的GlobalDirName置为null
+        Globals.initSaveDir(getExternalFilesDir(null));
     }
 
     private void saveRecord() {

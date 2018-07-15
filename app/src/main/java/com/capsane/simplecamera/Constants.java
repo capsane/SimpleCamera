@@ -9,10 +9,10 @@ class Constants {
 
     // 宏观, 微观采样数量
     static final int MACRO_PICTURE_NUMBER = 1;
-    static final int MICRO_PICTURE_NUMBER = 1;
+    static final int MICRO_PICTURE_NUMBER = 2;
 
     // 摄像头Id
-    static final String CAMERA_ID_INSIDE = "0";
+    static final String CAMERA_ID_INSIDE = "1";
     static final String CAMERA_ID_OUTSIDE = "0";
 
     // 微喷墨点拍摄、宏观拍摄、局部拍摄
